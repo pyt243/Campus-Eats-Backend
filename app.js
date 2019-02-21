@@ -27,7 +27,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/client/public/index.html'));
 })
 
-mongoose.connect("mongodb://localhost/trailusers2");
+mongoose.connect(process.env.MONGODB_URI||"mongodb://localhost/trailusers2");
 app.use(require("express-session")({
   secret:"secret",
   resave:false,
