@@ -8,6 +8,7 @@ var localStrategy = require("passport-local");
 const multer = require('multer');
 var User = require("./models/user");
 var Outlet = require("./models/outlet");
+var MenuItem = require("./models/menuitem");
 const path = require('path');
 const port = process.env.PORT || 3050;
 
@@ -19,7 +20,7 @@ if(process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client/build')));
   //
   app.get('*', (req, res) => {
-    res.sendfile(path.join(__dirname = 'client/build/index.html'));
+    res.sendFile(path.join(__dirname = 'client/build/index.html'));
   })
 }
 //build mode
@@ -27,7 +28,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/client/public/index.html'));
 })
 
-mongoose.connect(process.env.MONGODB_URI||"mongodb://localhost/trailusers2");
+mongoose.connect("mongodb://localhost/trailusers2");
 app.use(require("express-session")({
   secret:"secret",
   resave:false,
@@ -46,7 +47,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/images')
+        cb(null, 'public/../client/public/images')
     },
     filename: (req, file, cb) => {
         cb(null,file.originalname)
@@ -70,7 +71,7 @@ app.post("/signup",function(req,res){
   User.register(new User({username:req.body.username}),req.body.password,function(err,user){
     if(err){
       console.log(err);
-      res.redirect("/signup");
+      res.send({status:false,error:err});
     }else {
       user.flag="student";
       user.mobno=req.body.mobno;
@@ -88,7 +89,7 @@ app.post("/createoutletacc",function(req,res){
   User.register(new User({username:req.body.username}),req.body.password,function(err,user){
     if(err){
       console.log(err);
-      res.redirect("/signup");
+      res.send({status:false,error:err})
     }else {
       user.flag="outlet";
       user.mobno=req.body.mobno;
@@ -96,21 +97,21 @@ app.post("/createoutletacc",function(req,res){
     //  user.bitsid=req.body.bitsid;
       user.save();
       passport.authenticate("local")(req,res,function(){
-        res.send({user:user});
+        res.send({user:user,status:true});
         //res.redirect("/")
       });
     }
   });
 });
 app.post("/createoutlet",function(req,res){
+  var owner={id:req.body.user.id,username:req.body.user.username}
   Outlet.create({name:req.body.name},function(err,out){
     if(err){
       console.log("error");
     }else {
       out.location=req.body.location;
       out.description=req.body.description;
-      out.owner.id=req.body.user.id;
-      out.owner.username=req.body.username;
+      out.owner=req.body.user._id;
       out.user=req.body.user.username;
       out.image=req.body.image;
       out.save();
@@ -130,11 +131,47 @@ app.get("/logout",function(req,res){
   req.logout();
   //res.redirect("/");
 });
-app.get("/getuser",function(req,res){
-  console.log(req.user);
-  res.send({
-    idiot:"I'm a idiot"
+app.post("/myoutlet",function(req,res){
+  Outlet.findOne({user:req.body.user}).populate("owner").populate("menu").exec(function(err,outlet){
+    if(err){
+      console.log(err);
+    }else {
+      console.log(outlet);
+      console.log(req.body.user)
+      res.send({outlet:outlet});
+    }
   });
+});
+app.post("/outlets",function(req,res){
+  Outlet.find({}).populate("owner").exec(function(err,outlets){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      console.log(outlets);
+      res.send({status:true,outlets:outlets});
+    }
+  });
+});
+app.post("/addmenu",function(req,res){
+    Outlet.findById(req.body.outlet._id,function(err,outlet){
+      if(err){
+        res.send({staus:false,error:err});
+      }else {
+        MenuItem.create({name:req.body.name,outlet:outlet._id},function(err,menuitem){
+          if(err){
+            res.send({status:false,error:err});
+          }else {
+            menuitem.price=req.body.price;
+            menuitem.category=req.body.category;
+            menuitem.nov=req.body.nov;
+            menuitem.save();
+            outlet.menu.push(menuitem);
+            outlet.save();
+            res.send({outlet:outlet});
+          }
+        });
+      }
+    });
 });
 app.post('/upload', upload.single('image'), (req, res) => {
     if (req.file)

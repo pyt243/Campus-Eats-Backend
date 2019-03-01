@@ -6,12 +6,13 @@ var outletScheme = new mongoose.Schema({
   rating:Number,
   description:String,
   owner:{
-    id:{
      type:mongoose.Schema.Types.ObjectId,
      ref:"User"
-   },
-   username:String
   },
+  menu:[{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"MenuItem"
+  }],
   user:String,
   image:String
 });
