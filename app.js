@@ -9,6 +9,7 @@ const multer = require('multer');
 var User = require("./models/user");
 var Outlet = require("./models/outlet");
 var MenuItem = require("./models/menuitem");
+var dbkey = require("./dbkey");
 const path = require('path');
 const port = process.env.PORT || 3050;
 
@@ -28,7 +29,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/client/public/index.html'));
 })
 
-mongoose.connect("mongodb://campuseats:campuseats@cluster0-shard-00-00-kkpdt.mongodb.net:27017,cluster0-shard-00-01-kkpdt.mongodb.net:27017,cluster0-shard-00-02-kkpdt.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true",{ useNewUrlParser: true });
+mongoose.connect(dbkey,{ useNewUrlParser: true });
 app.use(require("express-session")({
   secret:"secret",
   resave:false,
