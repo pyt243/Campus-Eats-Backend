@@ -26,10 +26,11 @@ if(process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname = 'client/build/index.html'));
   })
 }
-//build mode
+else{
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/client/public/index.html'));
 })
+}
 
 mongoose.connect(process.env.MONGO_URL,{ useNewUrlParser: true });
 app.use(require("express-session")({
@@ -60,8 +61,8 @@ const upload = multer({
     storage
 });
 
-app.listen(3050,"127.0.0.1",function(){
-  console.log("listeneing on port 3050")
+app.listen(process.env.PORT||3050,"127.0.0.1",function(){
+  console.log(`listeneing on port ${process.env.PORT}`);
 });
 app.get("/",function(req,res){
   var todos=["Hiii","Byee","Good night"];
