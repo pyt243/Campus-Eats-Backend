@@ -48,7 +48,7 @@ passport.deserializeUser(User.deserializeUser());
 app.use(cors());
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static('./public'));
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'public/../client/public/images')
