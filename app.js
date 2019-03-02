@@ -14,7 +14,7 @@ const path = require('path');
 const port = process.env.PORT || 3050;
 process.env.MONGO_URL="mongodb://campuseats:campuseats@cluster0-shard-00-00-kkpdt.mongodb.net:27017,cluster0-shard-00-01-kkpdt.mongodb.net:27017,cluster0-shard-00-02-kkpdt.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
 
-
+/*
 //Static file declaration
 app.use(express.static(path.join(__dirname, 'client/build')));
 
@@ -23,14 +23,14 @@ if(process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client/build')));
   //
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname,'build','index.html'));
+    res.sendFile(path.resolve(__dirname,'client','build','index.html'));
   })
 }
 else{
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname+'/client/public/index.html'));
 })
-}
+}*/
 
 mongoose.connect(process.env.MONGO_URL,{ useNewUrlParser: true });
 app.use(require("express-session")({
@@ -51,7 +51,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/../client/public/images')
+        cb(null, 'public/images')
     },
     filename: (req, file, cb) => {
         cb(null,file.originalname)
