@@ -146,6 +146,9 @@ app.post("/myoutlet",function(req,res){
     }
   });
 });
+app.get("/trial",function(req,res){
+  res.send({message:"Hiiiii"});
+});
 app.post("/outlets",function(req,res){
   Outlet.find({}).populate("owner").exec(function(err,outlets){
     if(err){

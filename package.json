@@ -12,8 +12,7 @@
     "start": "NPM_CONFIG_PRODUCTION=false node app.js",
     "server": "nodemon app.js",
     "client": "npm start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "heroku-postbuild": "cd client && npm install && npm run build"
+    "dev": "concurrently \"npm run server\" \"npm run client\""
    },
   "author": "PYT",
   "license": "ISC",
