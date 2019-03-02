@@ -61,7 +61,7 @@ const upload = multer({
     storage
 });
 
-app.listen(process.env.PORT||3050,"127.0.0.1",function(){
+app.listen(process.env.PORT||3050,function(){
   console.log(`listeneing on port ${process.env.PORT}`);
 });
 app.get("/",function(req,res){
