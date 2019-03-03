@@ -127,8 +127,10 @@ app.post("/login",passport.authenticate("local"),function(req,res){
   console.log("user logged in");
   console.log(req.user.flag);
   var user = req.user;
-  user.idiot = "I'am a idiot";
-  res.send({user:user});
+  var status=false
+  if(user!=null)
+    status=true;
+  res.send({user:user,status:status});
 //res.redirect("/");
 });
 app.get("/logout",function(req,res){
