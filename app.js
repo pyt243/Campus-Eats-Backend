@@ -123,7 +123,7 @@ app.post("/createoutlet",function(req,res){
     }
   });
 });
-app.post("/login",passport.authenticate("local"),function(req,res){
+app.post("/login",passport.authenticate("local",{failureRedirect:"/loginfail"}),function(req,res){
   console.log("user logged in");
   console.log(req.user.flag);
   var user = req.user;
@@ -132,6 +132,9 @@ app.post("/login",passport.authenticate("local"),function(req,res){
     status=true;
   res.send({user:user,status:status});
 //res.redirect("/");
+});
+app.get("/loginfail",function(req,res){
+  res.send({status:false});
 });
 app.get("/logout",function(req,res){
   req.logout();
