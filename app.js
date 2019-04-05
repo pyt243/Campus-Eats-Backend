@@ -291,7 +291,7 @@ app.post("/myoutlet",function(req,res){
   });
 });
 app.get("/trial",function(req,res){
-  res.send({message:"Hiiiii"});
+  res.send({message:"I'm Awesome"});
 });
 app.post("/outlets",function(req,res){
   Outlet.find({}).populate("owner").populate("menu").exec(function(err,outlets){
