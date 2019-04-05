@@ -9,6 +9,8 @@ const multer = require('multer');
 var User = require("./models/user");
 var Outlet = require("./models/outlet");
 var MenuItem = require("./models/menuitem");
+var Cart = require("./models/cart");
+var Order = require("./models/order");
 var dbkey = require("./dbkey");
 const path = require('path');
 const port = process.env.PORT || 3050;
@@ -83,7 +85,7 @@ app.post("/signup",function(req,res){
       user.bitsid=req.body.bitsid;
       user.save();
       passport.authenticate("local")(req,res,function(){
-        res.send({status:true});
+        res.send({status:true,user:user});
         //res.redirect("/")
       });
     }
@@ -123,6 +125,143 @@ app.post("/createoutlet",function(req,res){
     }
   });
 });
+app.post("/createcart",function(req,res){
+  Cart.create({username:req.body.user.username},function(err,cart){
+    if(err){
+      console.log(err);
+      res.send({status:false,error:err});
+    }else {
+      cart.user=req.body.user._id;
+      cart.save();
+      res.send({status:true,cart:cart});
+    }
+  });
+});
+app.post("/addtocart",function(req,res){
+  Cart.findOne({username:req.body.user.username},function(err,cart){
+    if(err){
+      console.log(err);
+      res.send({status:false,error:err});
+    }else {
+      var status=true;
+      cart.items.forEach(function(item){
+        if(item._id==req.body.item._id){
+          status=false
+        }
+      });
+      if(status==true){
+      cart.items.push(req.body.item);
+      cart.save();
+      res.send({cart:cart});
+    }else{
+      res.send({status:false,message:"Item already exists in your cart"});
+    }
+  }
+  })
+});
+app.post("/viewcart",function(req,res){
+  Cart.findOne({username:req.body.user.username}).populate("items").exec(function(err,cart){
+     if(err){
+       res.send({status:false,error:err});
+     }else {
+       res.send({status:true,cart:cart});
+     }
+  });
+});
+app.post("/placeorder",function(req,res){
+  var items = req.body.items;
+  var quantity = req.body.quantity;
+  var oids = [];
+  for(var i=0;i<items.length;i++)
+    if(oids.indexOf(items[i].outlet)==-1)
+      oids.push(items[i].outlet);
+  oids.forEach(function(oid){
+    Outlet.findById(oid,function(err,outlet){
+      if(err){
+        res.send({status:false,error:err});
+      }else {
+        Order.create({studentname:req.body.user.username,outletname:outlet.name},function(err,order){
+          if(err){
+            res.send({status:false,error:err});
+          }else {
+            order.outlet=outlet._id;
+            order.student=req.body.user._id;
+            order.status = "received";
+            var d = new Date();
+            order.orderdate = d.getTime();
+            var sum=0;
+            for(var i=0;i<items.length;i++)
+              if(items[i].outlet==oid){
+                order.items.push(items[i]._id);
+                order.quantity.push(quantity[i]);
+                sum=sum+items[i].price*quantity[i];
+              }
+            order.totalcost = sum;
+            order.save();
+          }
+        });
+      }
+    });
+  });
+  Cart.findOne({username:req.body.user.username}).populate("items").exec(function(err,cart){
+     if(err){
+       res.send({status:false,error:err});
+     }else {
+       cart.items=[];
+       cart.save();
+       res.send({status:true,cart:cart});
+     }
+  });
+});
+app.post("/cstatus",function(req,res){
+  console.log("Hiiii");
+  console.log("Hiiii");
+  console.log("Hiiii");
+  console.log("Hiiii");
+  console.log("Hiiii");
+  console.log(req.body.order._id);
+  console.log("Hiiii");
+  console.log("Hiiii");
+
+  Order.findById(req.body.order._id,function(err,order){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      order.status=req.body.status;
+      order.save();
+      console.log(order);
+      res.send({status:true});
+    }
+  })
+})
+app.post("/getstudentorders",function(req,res){
+  Order.find({studentname:req.body.user.username}).populate("items").populate("student").populate("outlet").exec(function(err,orders){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      var uporders = []
+      orders.forEach(function(order){
+        if(order.status != "delivered")
+          uporders.push(order);
+      });
+      res.send({status:true,orders:uporders});
+    }
+  });
+});
+app.post("/getoutletorders",function(req,res){
+  Order.find({outletname:req.body.outlet.name}).populate("items").populate("student").populate("outlet").exec(function(err,orders){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      var uporders = []
+      orders.forEach(function(order){
+        if(order.status != "delivered")
+          uporders.push(order);
+      });
+      res.send({status:true,orders:uporders});
+    }
+  });
+})
 app.post("/login",passport.authenticate("local",{failureRedirect:"/loginfail"}),function(req,res){
   console.log("user logged in");
   console.log(req.user.flag);
@@ -155,7 +294,7 @@ app.get("/trial",function(req,res){
   res.send({message:"Hiiiii"});
 });
 app.post("/outlets",function(req,res){
-  Outlet.find({}).populate("owner").exec(function(err,outlets){
+  Outlet.find({}).populate("owner").populate("menu").exec(function(err,outlets){
     if(err){
       res.send({status:false,error:err});
     }else {
@@ -176,6 +315,7 @@ app.post("/addmenu",function(req,res){
             menuitem.price=req.body.price;
             menuitem.category=req.body.category;
             menuitem.nov=req.body.nov;
+            menuitem.outletname=req.body.outlet.name;
             menuitem.save();
             outlet.menu.push(menuitem);
             outlet.save();

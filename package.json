@@ -5,7 +5,7 @@
   "main": "app.js",
   "engines": {
     "node": "10.x",
-    "npm":"6.x"
+    "npm": "6.x"
   },
   "scripts": {
     "client-install": "npm install --prefix client",
@@ -13,7 +13,7 @@
     "server": "nodemon app.js",
     "client": "npm start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\""
-   },
+  },
   "author": "PYT",
   "license": "ISC",
   "dependencies": {
@@ -28,5 +28,6 @@
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^5.0.1"
-  }
+  },
+  "heroku-run-build-script": true
 }
