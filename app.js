@@ -11,6 +11,7 @@ var Outlet = require("./models/outlet");
 var MenuItem = require("./models/menuitem");
 var Cart = require("./models/cart");
 var Order = require("./models/order");
+var Review = require("./models/review");
 var dbkey = require("./dbkey");
 const path = require('path');
 const port = process.env.PORT || 3050;
@@ -168,6 +169,17 @@ app.post("/viewcart",function(req,res){
      }
   });
 });
+app.post("/removecartitem",function(req,res){
+  Cart.findOne({username:req.body.user.username},function(err,cart){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      cart.items.splice(req.body.index,1);
+      cart.save();
+      res.send({status:true,cart:cart});
+    }
+  })
+})
 app.post("/placeorder",function(req,res){
   var items = req.body.items;
   var quantity = req.body.quantity;
@@ -231,6 +243,16 @@ app.post("/cstatus",function(req,res){
       order.save();
       console.log(order);
       res.send({status:true});
+      /*
+      app.post('/getcourse',function(req,res){
+        Course.findOne({coursename:req.body.coursename},function(err,course){
+              res.send({course:course});
+        });
+    })
+
+
+
+      */
     }
   })
 })
@@ -325,6 +347,19 @@ app.post("/addmenu",function(req,res){
       }
     });
 });
+app.post("/postreview",function(req,res){
+  Review.create({studentname:req.body.user.username,outletname:req.body.outlet.name},function(err,review){
+    if(err){
+      res.send({status:false,error:err});
+    }else{
+      review.student=req.body.user._id;
+      review.outlet=req.body.outlet._id;
+      review.conten=req.body.content;
+      review.save();
+      res.send({status:true});
+    }
+  })
+})
 app.post('/upload', upload.single('image'), (req, res) => {
     if (req.file)
         res.json({
