@@ -13,4 +13,5 @@ var reviewScheme = new mongoose.Schema({
     ref:"Outlet"
   }
 });
+
 module.exports = mongoose.model("Review",reviewScheme);

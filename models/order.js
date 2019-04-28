@@ -20,4 +20,5 @@ var orderScheme = new mongoose.Schema({
     ref:"Outlet"
   }
 });
+
 module.exports = mongoose.model("Order",orderScheme);
