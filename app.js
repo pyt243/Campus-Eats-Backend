@@ -270,6 +270,15 @@ app.post("/getstudentorders",function(req,res){
     }
   });
 });
+app.post("/stuhistory",function(req,res){
+  Order.find({studentname:req.body.user.username,status:"delivered"}).populate("items").populate("outlet").exec(function(err,orders){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      res.send({status:true,orders:orders});
+    }
+  })
+})
 app.post("/getoutletorders",function(req,res){
   Order.find({outletname:req.body.outlet.name}).populate("items").populate("student").populate("outlet").exec(function(err,orders){
     if(err){
@@ -326,27 +335,50 @@ app.post("/outlets",function(req,res){
   });
 });
 app.post("/addmenu",function(req,res){
+    Outlet.findById(req.body.outlet._id).populate("menu").exec(function(err,outlet){
+      if(err){
+        res.send({staus:false,error:err});
+      }else {
+        var p=0
+        for(var i=0;i<outlet.menu.length;i++)
+          if(req.body.name == outlet.menu[i].name)
+            p=1;
+        if(p==1){
+          res.send({status:false});
+        }else {
+          MenuItem.create({name:req.body.name,outlet:outlet._id},function(err,menuitem){
+            if(err){
+              res.send({status:false,error:err});
+            }else {
+
+              menuitem.price=req.body.price;
+              menuitem.category=req.body.category;
+              menuitem.nov=req.body.nov;
+              menuitem.outletname=req.body.outlet.name;
+              menuitem.save();
+              outlet.menu.push(menuitem);
+              outlet.save();
+              res.send({outlet:outlet});
+            }
+          });
+        }
+
+      }
+    });
+});
+app.post("/deletemenu",function(req,res){
     Outlet.findById(req.body.outlet._id,function(err,outlet){
       if(err){
         res.send({staus:false,error:err});
       }else {
-        MenuItem.create({name:req.body.name,outlet:outlet._id},function(err,menuitem){
-          if(err){
-            res.send({status:false,error:err});
-          }else {
-            menuitem.price=req.body.price;
-            menuitem.category=req.body.category;
-            menuitem.nov=req.body.nov;
-            menuitem.outletname=req.body.outlet.name;
-            menuitem.save();
-            outlet.menu.push(menuitem);
-            outlet.save();
-            res.send({outlet:outlet});
-          }
-        });
+         var i = outlet.menu.indexOf(req.body.menuId);
+         outlet.menu.splice(i,1);
+         outlet.save();
+         res.send({status:true});
       }
-    });
-});
+
+    })
+})
 app.post("/postreview",function(req,res){
   Review.create({studentname:req.body.user.username,outletname:req.body.outlet.name},function(err,review){
     if(err){
@@ -354,12 +386,69 @@ app.post("/postreview",function(req,res){
     }else{
       review.student=req.body.user._id;
       review.outlet=req.body.outlet._id;
-      review.conten=req.body.content;
+      review.content=req.body.content;
       review.save();
       res.send({status:true});
     }
+  });
+});
+app.post("/getreviews",function(req,res){
+  Review.find({outlet:req.body.outlet._id}).populate("student").exec(function(err,reviews){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      res.send({status:true,reviews:reviews});
+    }
+  })
+});
+
+app.post("/stats",function(req,res){
+  var s,o,r;
+  Order.find({},function(err,orders){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+        o=orders.length;
+        s=0;
+        for(var i=0;i<orders.length;i++)
+          s=s+orders[i].totalcost;
+        Review.find({},function(err,reviews){
+          if(err){
+            res.send({status:false,error:err});
+          }else {
+            r=reviews.length;
+            res.send({onum:o,snum:s,rnum:r});
+          }
+        })
+    }
   })
 })
+app.post("/chartstats",function(req,res){
+  var ots=[];
+  var series=[];
+  var s2=[];
+  Order.find({},function(err,orders){
+    if(err){
+      res.send({status:false,error:err});
+    }else {
+      for(var i=0;i<orders.length;i++)
+        if(ots.indexOf(orders[i].outletname)==-1)
+           ots.push(orders[i].outletname);
+      ots.forEach(function(o){
+        var s=0;
+        var c=0;
+        for(var i=0;i<orders.length;i++)
+          if(orders[i].outletname==o){
+             s=s+orders[i].totalcost;
+             c=c+1;
+           }
+        series.push(s);
+        s2.push(c);
+      });
+      res.send({ots:ots,series:series,s2:s2});
+    }
+  });
+});
 app.post('/upload', upload.single('image'), (req, res) => {
     if (req.file)
         res.json({
